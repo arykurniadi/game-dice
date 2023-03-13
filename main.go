@@ -6,6 +6,11 @@ import (
 	"time"
 )
 
+const (
+	REMOVED_WHEN_DICE_TOP = 6
+	MOVE_WHEN_DICE_TOP    = 1
+)
+
 type Dice struct {
 	TopSideValue int
 }
@@ -106,7 +111,7 @@ func NewGame(numberOfPlayer int, numberOfDicePerPlayer int) *Game {
 }
 
 func (g *Game) DisplayRound() *Game {
-	fmt.Printf("===== Giliran %v =====\n", g.Round)
+	fmt.Printf("\n===== Giliran %v =====\n", g.Round)
 	return g
 }
 
@@ -114,7 +119,7 @@ func (g *Game) DisplayTopSideDice(title string) {
 	fmt.Printf("%v \n", title)
 
 	for _, player := range g.Players {
-		fmt.Printf("Pemain #%v: ", player.GetName())
+		fmt.Printf("Pemain #%v (%v): ", player.GetName(), player.GetPoint())
 
 		diceTopSide := ""
 		for _, dice := range player.Dices {
@@ -167,15 +172,15 @@ func (g *Game) Start() {
 		for playerIndex, player := range g.Players {
 			tempDiceArr := []Dice{}
 			for _, dice := range player.Dices {
-				if dice.GetTopSideValue() == 6 {
-					player.AddPoint(1)
+				if dice.GetTopSideValue() == REMOVED_WHEN_DICE_TOP {
+					player.AddPoint(MOVE_WHEN_DICE_TOP)
 					player.RemoveDice(dice.GetTopSideValue())
 				}
 
 				if dice.GetTopSideValue() == 1 {
 					if player.GetPosition() == (g.NumberOfPlayer - 1) {
 						g.Players[0].InsertDice(dice)
-						player.RemoveDice(1)
+						player.RemoveDice(MOVE_WHEN_DICE_TOP)
 					} else {
 						tempDiceArr = append(tempDiceArr, dice)
 						player.RemoveDice(1)
@@ -198,14 +203,18 @@ func (g *Game) Start() {
 		g.DisplayTopSideDice("Setelah Evaluasi")
 
 		playerHasDice := g.NumberOfPlayer
-
+		counterLenDice := 0
 		for _, player := range g.Players {
 			if len(player.Dices) <= 0 {
 				playerHasDice--
 			}
+
+			if len(player.Dices) == 0 {
+				counterLenDice++
+			}
 		}
 
-		if playerHasDice == 1 {
+		if playerHasDice == 1 || counterLenDice == g.NumberOfPlayer {
 			g.DisplayWinner(g.GetWinner())
 			break
 		}
